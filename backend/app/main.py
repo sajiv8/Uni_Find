@@ -1,16 +1,10 @@
-from fastapi import FastAPI, Depends
-from sqlalchemy.orm import Session
-from passlib.context import CryptContext
+from fastapi import FastAPI
 
-from app.database.database import get_db
-from app.models.user import User
-from app.schemas.user import UserCreate
+from app.api.users import router as users_router
 
-app = FastAPI()
-
-pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto"
+app = FastAPI(
+    title="Uni_Find API",
+    version="1.0.0"
 )
 
 
@@ -21,24 +15,4 @@ def root():
     }
 
 
-@app.get("/users")
-def get_users(db: Session = Depends(get_db)):
-    users = db.query(User).all()
-    return users
-
-
-@app.post("/users")
-def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    hashed_password = pwd_context.hash(user.password)
-
-    new_user = User(
-        name=user.name,
-        email=user.email,
-        password_hash=hashed_password
-    )
-
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-
-    return new_user
+app.include_router(users_router)

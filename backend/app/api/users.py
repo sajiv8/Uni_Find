@@ -53,3 +53,48 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
         )
 
     return user
+@router.put("/{user_id}", response_model=UserResponse)
+def update_user(
+    user_id: int,
+    user_data: UserCreate,
+    db: Session = Depends(get_db)
+):
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    user.name = user_data.name
+    user.email = user_data.email
+    user.password_hash = pwd_context.hash(user_data.password)
+
+    db.commit()
+    db.refresh(user)
+
+    return user
+
+
+@router.delete("/{user_id}")
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    db.delete(user)
+    db.commit()
+
+    return {
+        "message": "User deleted successfully"
+    }
