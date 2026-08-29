@@ -1,18 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
-from app.schemas.user import UserCreate, UserResponse
 from app.database.database import get_db
 from app.models.user import User
+from app.schemas.user import UserCreate, UserResponse
 from app.core.security import (
     pwd_context,
-    decode_access_token
-)
-
-
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/auth/login"
+    get_current_user
 )
 
 
@@ -58,16 +52,8 @@ def create_user(
 @router.get("/", response_model=list[UserResponse])
 def get_users(
     db: Session = Depends(get_db),
-    token: str = Depends(oauth2_scheme)
+    current_user: User = Depends(get_current_user)
 ):
-    user_id = decode_access_token(token)
-
-    if user_id is None:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid or expired token"
-        )
-
     return db.query(User).all()
 
 
@@ -75,16 +61,8 @@ def get_users(
 def get_user(
     user_id: int,
     db: Session = Depends(get_db),
-    token: str = Depends(oauth2_scheme)
+    current_user: User = Depends(get_current_user)
 ):
-    current_user_id = decode_access_token(token)
-
-    if current_user_id is None:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid or expired token"
-        )
-
     user = db.query(User).filter(
         User.id == user_id
     ).first()
@@ -103,16 +81,8 @@ def update_user(
     user_id: int,
     user_data: UserCreate,
     db: Session = Depends(get_db),
-    token: str = Depends(oauth2_scheme)
+    current_user: User = Depends(get_current_user)
 ):
-    current_user_id = decode_access_token(token)
-
-    if current_user_id is None:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid or expired token"
-        )
-
     user = db.query(User).filter(
         User.id == user_id
     ).first()
@@ -139,16 +109,8 @@ def update_user(
 def delete_user(
     user_id: int,
     db: Session = Depends(get_db),
-    token: str = Depends(oauth2_scheme)
+    current_user: User = Depends(get_current_user)
 ):
-    current_user_id = decode_access_token(token)
-
-    if current_user_id is None:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid or expired token"
-        )
-
     user = db.query(User).filter(
         User.id == user_id
     ).first()
