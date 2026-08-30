@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.schemas.user import UserCreate, UserResponse
 from app.database.database import get_db
 from app.models.user import User
-from app.schemas.user import UserCreate, UserResponse
 from app.core.security import pwd_context, get_current_user
 
 
@@ -46,8 +46,8 @@ def create_user(
 
 @router.get("/", response_model=list[UserResponse])
 def get_users(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     return db.query(User).all()
 
@@ -55,8 +55,8 @@ def get_users(
 @router.get("/{user_id}", response_model=UserResponse)
 def get_user(
     user_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     if current_user.id != user_id:
         raise HTTPException(
@@ -81,8 +81,8 @@ def get_user(
 def update_user(
     user_id: int,
     user_data: UserCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     if current_user.id != user_id:
         raise HTTPException(
@@ -100,6 +100,17 @@ def update_user(
             detail="User not found"
         )
 
+    existing_user = db.query(User).filter(
+        User.email == user_data.email,
+        User.id != user_id
+    ).first()
+
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="Email already registered"
+        )
+
     user.name = user_data.name
     user.email = user_data.email
     user.password_hash = pwd_context.hash(
@@ -115,8 +126,8 @@ def update_user(
 @router.delete("/{user_id}")
 def delete_user(
     user_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     if current_user.id != user_id:
         raise HTTPException(
