@@ -4,10 +4,7 @@ from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse
-from app.core.security import (
-    pwd_context,
-    get_current_user
-)
+from app.core.security import pwd_context, get_current_user
 
 
 router = APIRouter(
@@ -31,9 +28,7 @@ def create_user(
             detail="Email already registered"
         )
 
-    hashed_password = pwd_context.hash(
-        user.password
-    )
+    hashed_password = pwd_context.hash(user.password)
 
     new_user = User(
         name=user.name,
@@ -63,6 +58,12 @@ def get_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="You can only access your own account"
+        )
+
     user = db.query(User).filter(
         User.id == user_id
     ).first()
@@ -83,6 +84,12 @@ def update_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="You can only update your own account"
+        )
+
     user = db.query(User).filter(
         User.id == user_id
     ).first()
@@ -111,6 +118,12 @@ def delete_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="You can only delete your own account"
+        )
+
     user = db.query(User).filter(
         User.id == user_id
     ).first()
