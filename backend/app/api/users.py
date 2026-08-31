@@ -1,10 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.schemas.user import UserCreate, UserResponse
 from app.database.database import get_db
 from app.models.user import User
-from app.core.security import pwd_context, get_current_user
+from app.schemas.user import UserCreate, UserResponse
+from app.core.security import (
+    pwd_context,
+    get_current_user,
+    get_current_admin
+)
 
 
 router = APIRouter(
@@ -28,12 +32,15 @@ def create_user(
             detail="Email already registered"
         )
 
-    hashed_password = pwd_context.hash(user.password)
+    hashed_password = pwd_context.hash(
+        user.password
+    )
 
     new_user = User(
         name=user.name,
         email=user.email,
         password_hash=hashed_password,
+        role="user",
         is_active=True
     )
 
@@ -46,8 +53,8 @@ def create_user(
 
 @router.get("/", response_model=list[UserResponse])
 def get_users(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin)
 ):
     return db.query(User).all()
 
@@ -55,10 +62,10 @@ def get_users(
 @router.get("/{user_id}", response_model=UserResponse)
 def get_user(
     user_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    if current_user.id != user_id:
+    if current_user.role != "admin" and current_user.id != user_id:
         raise HTTPException(
             status_code=403,
             detail="You can only access your own account"
@@ -81,10 +88,10 @@ def get_user(
 def update_user(
     user_id: int,
     user_data: UserCreate,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    if current_user.id != user_id:
+    if current_user.role != "admin" and current_user.id != user_id:
         raise HTTPException(
             status_code=403,
             detail="You can only update your own account"
@@ -98,17 +105,6 @@ def update_user(
         raise HTTPException(
             status_code=404,
             detail="User not found"
-        )
-
-    existing_user = db.query(User).filter(
-        User.email == user_data.email,
-        User.id != user_id
-    ).first()
-
-    if existing_user:
-        raise HTTPException(
-            status_code=400,
-            detail="Email already registered"
         )
 
     user.name = user_data.name
@@ -126,15 +122,9 @@ def update_user(
 @router.delete("/{user_id}")
 def delete_user(
     user_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin)
 ):
-    if current_user.id != user_id:
-        raise HTTPException(
-            status_code=403,
-            detail="You can only delete your own account"
-        )
-
     user = db.query(User).filter(
         User.id == user_id
     ).first()
