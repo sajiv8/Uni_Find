@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy.sql import func
-
+from sqlalchemy.orm import relationship
 from app.database.base import Base
 
 
@@ -17,3 +17,9 @@ class User(Base):
     )
     is_active = Column(Boolean, default=True)
     role = Column(String, default="user", nullable=False)
+
+    resources = relationship(
+    "Resource",
+    back_populates="owner",
+    cascade="all, delete-orphan"
+)
