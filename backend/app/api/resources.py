@@ -23,8 +23,8 @@ def create_resource(
     new_resource = Resource(
         title=resource_data.title,
         description=resource_data.description,
-        resource_type=resource_data.resource_type,
-        file_url=resource_data.file_url,
+        category=resource_data.category,
+        location=resource_data.location,
         owner_id=current_user.id
     )
 

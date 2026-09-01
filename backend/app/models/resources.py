@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, Boolean, DateTime
+from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
 from app.database.base import Base
@@ -13,13 +14,21 @@ class Resource(Base):
 
     description = Column(Text, nullable=True)
 
-    resource_type = Column(String, nullable=False)
+    category = Column(String, nullable=False)
 
-    file_url = Column(String, nullable=True)
+    location = Column(String, nullable=True)
+
+    is_available = Column(Boolean, default=True, nullable=False)
 
     owner_id = Column(
         Integer,
         ForeignKey("users.id"),
+        nullable=False
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
         nullable=False
     )
 
