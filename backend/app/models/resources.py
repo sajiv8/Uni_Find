@@ -8,11 +8,22 @@ class Resource(Base):
     __tablename__ = "resources"
 
     id = Column(Integer, primary_key=True, index=True)
+
     title = Column(String, nullable=False)
+
     description = Column(Text, nullable=True)
+
     resource_type = Column(String, nullable=False)
+
     file_url = Column(String, nullable=True)
 
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    owner_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
 
-    owner = relationship("User")
+    owner = relationship(
+        "User",
+        back_populates="resources"
+    )
