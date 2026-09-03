@@ -39,12 +39,24 @@ def create_resource(
 # GET ALL RESOURCES
 @router.get("/", response_model=list[ResourceResponse])
 def get_resources(
+    search: str | None = None,
+    resource_type: str | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    resources = db.query(Resource).all()
+    query = db.query(Resource)
 
-    return resources
+    if search:
+        query = query.filter(
+            Resource.title.ilike(f"%{search}%")
+        )
+
+    if resource_type:
+        query = query.filter(
+            Resource.resource_type == resource_type
+        )
+
+    return query.all()
 
 
 # GET RESOURCE BY ID

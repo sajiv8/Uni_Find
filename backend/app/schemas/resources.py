@@ -1,23 +1,21 @@
-from datetime import datetime
-
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
+from typing import Optional
 
 
 class ResourceCreate(BaseModel):
     title: str
-    description: str | None = None
-    category: str
-    location: str | None = None
+    description: Optional[str] = None
+    resource_type: str
+    file_url: Optional[str] = None
 
 
 class ResourceResponse(BaseModel):
     id: int
     title: str
-    description: str | None
-    category: str
-    location: str | None
-    is_available: bool
+    description: Optional[str] = None
     owner_id: int
-    created_at: datetime
+    resource_type: str
+    file_url: Optional[str] = None
 
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        from_attributes = True
