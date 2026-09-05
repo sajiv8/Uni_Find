@@ -41,6 +41,8 @@ def create_resource(
 def get_resources(
     search: str | None = None,
     resource_type: str | None = None,
+    skip: int = 0,
+    limit: int = 10,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -56,7 +58,9 @@ def get_resources(
             Resource.resource_type == resource_type
         )
 
-    return query.all()
+    resources = query.offset(skip).limit(limit).all()
+
+    return resources
 
 
 # GET RESOURCE BY ID
