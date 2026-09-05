@@ -16,7 +16,8 @@ from app.core.security import get_current_user
 router = APIRouter(
     prefix="/resources",
     tags=["resources"]
-)@router.post("/upload")
+)
+@router.post("/upload")
 def upload_file(
     file: UploadFile = File(...)
 ):
