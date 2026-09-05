@@ -1,6 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+import os
+import uuid
+
+from fastapi import UploadFile, File
+
 from app.database.database import get_db
 from app.models.resources import Resource
 from app.models.user import User
@@ -11,7 +16,28 @@ from app.core.security import get_current_user
 router = APIRouter(
     prefix="/resources",
     tags=["resources"]
-)
+)@router.post("/upload")
+def upload_file(
+    file: UploadFile = File(...)
+):
+    upload_dir = "uploads"
+    os.makedirs(upload_dir, exist_ok=True)
+
+    file_extension = os.path.splitext(file.filename)[1]
+    unique_filename = f"{uuid.uuid4()}{file_extension}"
+
+    file_path = os.path.join(upload_dir, unique_filename)
+
+    with open(file_path, "wb") as buffer:
+        buffer.write(file.file.read())
+
+    return {
+        "message": "File uploaded successfully",
+        "filename": unique_filename,
+        "file_url": f"/uploads/{unique_filename}"
+    }
+
+
 
 
 # CREATE RESOURCE
